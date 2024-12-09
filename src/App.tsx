@@ -4,6 +4,7 @@ import { AuthProvider } from './context/auth.context';
 import Dashboard from './pages/dashboard';
 import { ProtectedRoute } from './utils/protectedRoute.utils';
 import NavDrawerLayout from './layout/layout';
+import Brands from './pages/brands';
 
 export function App() {
   return (
@@ -14,6 +15,7 @@ export function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<NavDrawerLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/brands" element={<Brands />} />
             {/* Más rutas protegidas aquí */}
           </Route>
         </Route>

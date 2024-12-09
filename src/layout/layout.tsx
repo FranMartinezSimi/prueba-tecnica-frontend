@@ -31,7 +31,7 @@ const drawerWidth = 240;
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Perfumes', icon: <ProductionQuantityLimitsIcon />, path: '/perfumes' },
-  { text: 'Marcas', icon: <BrandingWatermarkIcon />, path: '/marcas' },
+  { text: 'Marcas', icon: <BrandingWatermarkIcon />, path: '/brands' },
   { text: 'Inventario', icon: <InventoryIcon />, path: '/inventario' },
   { text: 'Ventas', icon: <SellIcon />, path: '/ventas' },
 ];
