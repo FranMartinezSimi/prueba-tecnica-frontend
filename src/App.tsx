@@ -5,7 +5,7 @@ import Dashboard from './pages/dashboard';
 import { ProtectedRoute } from './utils/protectedRoute.utils';
 import NavDrawerLayout from './layout/layout';
 import Brands from './pages/brands';
-
+import Perfumes from './pages/perfumes';
 export function App() {
   return (
     <AuthProvider>
@@ -16,6 +16,7 @@ export function App() {
           <Route element={<NavDrawerLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/brands" element={<Brands />} />
+            <Route path="/perfumes" element={<Perfumes />} />
             {/* Más rutas protegidas aquí */}
           </Route>
         </Route>

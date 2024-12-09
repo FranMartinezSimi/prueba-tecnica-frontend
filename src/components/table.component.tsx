@@ -20,7 +20,7 @@ export const DataGridComponent: React.FC<DataGridComponentProps> = ({
   columns,
   rows,
   loading = false,
-  pageSize = 5,
+  pageSize = 10,
   checkboxSelection = true,
   onPageChange,
   onRowSelectionChange,
