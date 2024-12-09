@@ -1,104 +1,74 @@
 import React from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  TablePagination,
-  Box,
-  CircularProgress,
-} from '@mui/material';
+import Box from '@mui/material/Box';
+import { DataGrid, GridColDef, GridPaginationModel, GridRowModel, GridValidRowModel, GridRowSelectionModel, GridCallbackDetails } from '@mui/x-data-grid';
+import DeleteIcon from '@mui/icons-material/Delete';
+import IconButton from '@mui/material/IconButton';
 
-interface Column {
-  id: string;
-  label: string;
-  minWidth?: number;
-  align?: 'right' | 'left' | 'center';
-  format?: (value: unknown) => string;
+interface DataGridComponentProps {
+  columns: GridColDef[];
+  rows: unknown[];
+  loading?: boolean;
+  pageSize?: number;
+  checkboxSelection?: boolean;
+  onPageChange?: (model: GridPaginationModel) => void;
+  onRowSelectionChange?: (rowSelectionModel: GridRowSelectionModel, details: GridCallbackDetails) => void;
+  processRowUpdate?: (newRow: GridRowModel) => Promise<GridRowModel>;
+  onDeleteRow?: (id: number | string) => void;
 }
 
-interface TableComponentProps {
-  columns: Column[];
-  rows: Record<string, unknown>[];
-  isLoading?: boolean;
-  page?: number;
-  rowsPerPage?: number;
-  totalRows?: number;
-  onPageChange?: (newPage: number) => void;
-  onRowsPerPageChange?: (newRowsPerPage: number) => void;
-}
-
-export const TableComponent: React.FC<TableComponentProps> = ({
+export const DataGridComponent: React.FC<DataGridComponentProps> = ({
   columns,
   rows,
-  isLoading = false,
-  page = 0,
-  rowsPerPage = 10,
-  totalRows = 0,
+  loading = false,
+  pageSize = 5,
+  checkboxSelection = true,
   onPageChange,
-  onRowsPerPageChange,
+  onRowSelectionChange,
+  processRowUpdate,
+  onDeleteRow
 }) => {
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    onPageChange?.(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onRowsPerPageChange?.(parseInt(event.target.value, 10));
-  };
-
-  if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" p={3}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const columnsWithDelete = React.useMemo(() => {
+    if (!checkboxSelection || !onDeleteRow) return columns;
+    
+    return [
+      ...columns,
+      {
+        field: 'actions',
+        headerName: 'Acciones',
+        width: 100,
+        renderCell: (params) => (
+          <IconButton
+            onClick={() => onDeleteRow(params.row.id)}
+            color="error"
+            size="small"
+          >
+            <DeleteIcon />
+          </IconButton>
+        ),
+      },
+    ];
+  }, [columns, checkboxSelection, onDeleteRow]);
 
   return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <TableContainer sx={{ maxHeight: 440 }}>
-        <Table stickyHeader aria-label="sticky table">
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  align={column.align}
-                  style={{ minWidth: column.minWidth }}
-                >
-                  {column.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row, index) => (
-              <TableRow hover role="checkbox" tabIndex={-1} key={index}>
-                {columns.map((column) => {
-                  const value = row[column.id];
-                  return (
-                    <TableCell key={column.id} align={column.align}>
-                      {column.format ? column.format(value) : value?.toString()}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <TablePagination
-        rowsPerPageOptions={[10, 25, 100]}
-        component="div"
-        count={totalRows}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
+    <Box sx={{ height: 400, width: '100%' }}>
+      <DataGrid
+        rows={rows as GridValidRowModel[]}
+        columns={columnsWithDelete}
+        loading={loading}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize,
+            },
+          },
+        }}
+        pageSizeOptions={[5, 10, 25, 100]}
+        checkboxSelection={checkboxSelection}
+        disableRowSelectionOnClick
+        onPaginationModelChange={onPageChange}
+        onRowSelectionModelChange={onRowSelectionChange}
+        processRowUpdate={processRowUpdate}
       />
-    </Paper>
+    </Box>
   );
 };

@@ -25,7 +25,6 @@ export default function Login() {
                 setError(null);
                 const response = await loginAxios(values.email, values.password);
                 if (response.status === 200) {
-                    console.log(response.data.data.access_token);
                     login(response?.data?.data?.access_token);
                     navigate("/dashboard", { replace: true });
                 }
