@@ -1,14 +1,15 @@
 import { useFormik } from "formik";
-import { Alert, Box, Button, Container, IconButton, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Container, IconButton, TextField, Typography } from "@mui/material";
 import { loginValidation } from "../validations/login.validation";
-import { loginAxios } from "../hooks/login.axios";
-import { useAuth } from "../context/auth.context";
+import { useAuth } from "../hooks/usAuth";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Visibility, VisibilityOff } from '@mui/icons-material'
+import { AuthContext } from "../context/auth.context";
 
 export default function Login() {
-    const { login } = useAuth();
+    const { loginAxios, loading } = useAuth();
+    const { login } = useContext(AuthContext);
     const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
@@ -24,8 +25,9 @@ export default function Login() {
                 setError(null);
                 const response = await loginAxios(values.email, values.password);
                 if (response.status === 200) {
-                    login(response?.data?.data?.token);
-                    navigate("/dashboard");
+                    console.log(response.data.data.access_token);
+                    login(response?.data?.data?.access_token);
+                    navigate("/dashboard", { replace: true });
                 }
             } catch (err: unknown) {
                 const error = err as { response?: { data?: { message?: string } } };
@@ -45,11 +47,13 @@ export default function Login() {
                 justifyContent: 'center',
                 width: '100%'
             }}>
-            {error && (
+            {
+                error && (
                     <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
                         {error}
                     </Alert>
-                )}
+                )
+            }
             <Typography component="h1" variant="h5">
                 Iniciar Sesión prueba tecnica
             </Typography>
@@ -97,15 +101,13 @@ export default function Login() {
                 {formik.touched.password && formik.errors.password && (
                     <Typography color="error">{formik.errors.password}</Typography>
                 )}
-                <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    sx={{ mt: 3, mb: 2 }}
-                    data-testid="login-button"
-                >
-                    Iniciar Sesión
-                </Button>
+                {
+                    loading ? (
+                        <CircularProgress />
+                    ) : (
+                        <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} data-testid="login-button">Iniciar Sesión</Button>
+                    )
+                }
             </Box>
         </Box>
     </Container>
