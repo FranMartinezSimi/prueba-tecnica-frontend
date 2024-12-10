@@ -50,7 +50,7 @@ export const DataGridComponent: React.FC<DataGridComponentProps> = ({
   }, [columns, checkboxSelection, onDeleteRow]);
 
   return (
-    <Box sx={{ height: 400, width: '100%' }}>
+    <Box sx={{ height: 350, width: '100%' }}>
       <DataGrid
         rows={rows as GridValidRowModel[]}
         columns={columnsWithDelete}

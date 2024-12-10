@@ -37,7 +37,6 @@ const Dashboard = () => {
     });
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
-    console.log(response?.data);
     useEffect(() => {
         if (response?.data) {
             setRows(response.data);

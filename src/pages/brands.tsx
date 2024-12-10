@@ -1,11 +1,14 @@
 import { useFetch } from "../hooks/useFetch";
 import { DataGridComponent } from '../components/table.component';
-import { Box, CircularProgress, Snackbar, Alert, IconButton, Typography } from "@mui/material";
+import { Box, CircularProgress, Snackbar, Alert, IconButton } from "@mui/material";
 import { useState, useEffect } from "react";
 import { GridRowModel, GridRowSelectionModel } from "@mui/x-data-grid";
 import { usePutFetch } from "../hooks/putFetch";
 import { useDeleteFetch } from "../hooks/deleteFetch";
 import { DeleteRounded } from "@mui/icons-material";
+import { usePostFetch } from "../hooks/postFetch";
+import { StandardForm } from "../components/standarForm/standarForm.component";
+
 
 interface ApiResponse {
     status: string;
@@ -20,22 +23,50 @@ export interface Brand {
     logo?: string;
 }
 
+interface BrandFormData {
+    name: string;
+    logo?: string;
+}
+
 const Brands = () => {
-    const { data: response, loading: fetchLoading, error: fetchError } = useFetch<ApiResponse>("/brands");
+    const { data: response, loading: fetchLoading, error: fetchError, refetch } = useFetch<ApiResponse>("/brands");
     const { updateData, loading: updateLoading, error: updateError } = usePutFetch<Brand>();
-    const [rows, setRows] = useState<Brand[]>([]);
+    const { createData, loading: createLoading, error: createError } = usePostFetch<Brand>("/brands");
     const { deleteData, loading: deleteLoading, error: deleteError } = useDeleteFetch<Brand>("/brands");
+    const [selectedRows, setSelectedRows] = useState<number[]>([]);
+
+    const [rows, setRows] = useState<Brand[]>([]);
+
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
         severity: 'success' as 'success' | 'error'
     });
-    const [selectedRows, setSelectedRows] = useState<number[]>([]);
+
     useEffect(() => {
         if (response?.data) {
             setRows(response.data);
         }
     }, [response]);
+
+    const handleCreateBrand = async (data: BrandFormData) => {
+        try {
+            await createData(data);
+            refetch();
+            setSnackbar({
+                open: true,
+                message: 'Marca creada con éxito',
+                severity: 'success'
+            });
+        } catch (error: unknown) {
+            setSnackbar({
+                open: true,
+                message: 'Error al crear la marca',
+                severity: 'error'
+            });
+            console.error('Error al crear la marca:', error);
+        }
+    };
 
     const handleProcessRowUpdate = async (newRow: GridRowModel) => {
         try {
@@ -85,19 +116,23 @@ const Brands = () => {
         }
     };
 
+    useEffect(() => {
+        if (fetchError || updateError || deleteError || createError) {
+            setSnackbar({
+                open: true,
+                message: fetchError || updateError || deleteError || createError || 'Error en la operación',
+                severity: 'error'
+            });
+        }
+    }, [fetchError, updateError, deleteError, createError]);
 
-    if (fetchLoading || updateLoading) return (
+    if (fetchLoading || updateLoading || createLoading) return (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
             <CircularProgress />
         </Box>
     );
     
-    if (fetchError || updateError || deleteError) return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <Typography variant="h6" color="error">Error: {fetchError || updateError || deleteError}</Typography>
-        </Box>
-    );
-
+    
     if (!response?.data || !Array.isArray(response.data)) {
         return <div>No hay datos disponibles</div>;
     }
@@ -150,9 +185,27 @@ const Brands = () => {
                 checkboxSelection
                 onRowSelectionChange={(newSelection: GridRowSelectionModel) => {
                     setSelectedRows(newSelection as number[]);
-                }}            />
+                }}            
+            />
+            <StandardForm
+                title="Crear Nueva Marca"
+                fields={[
+                    {
+                        name: 'name',
+                        label: 'Nombre de la Marca',
+                        required: true
+                    },
+                    {
+                        name: 'logo',
+                        label: 'URL del Logo',
+                        required: false
+                    }
+                ]}
+                onSubmit={(data: unknown) => handleCreateBrand(data as BrandFormData)}
+                submitButtonText="Crear Marca"
+            />
 
-            <Snackbar 
+            <Snackbar
                 open={snackbar.open}
                 autoHideDuration={6000} 
                 onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}

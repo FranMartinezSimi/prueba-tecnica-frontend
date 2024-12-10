@@ -7,6 +7,10 @@ import { usePutFetch } from "../hooks/putFetch";
 import { useDeleteFetch } from "../hooks/deleteFetch";
 import { DeleteRounded } from "@mui/icons-material";
 import { Brand } from "./brands";
+import { StandardForm } from "../components/standarForm/standarForm.component";
+import { usePostFetch } from "../hooks/postFetch";
+import { AxiosError } from "axios";
+
 
 interface ApiResponse {
     status: string;
@@ -23,17 +27,28 @@ export interface Perfume {
     logo?: string;
 }
 
+interface PerfumeFormData {
+    id: number;
+    name: string;
+    brandId: number;
+    description: string;
+    imageUrl?: string;
+}
+
 const Perfumes = () => {
-    const { data: response, loading: fetchLoading, error: fetchError } = useFetch<ApiResponse>("/perfumes");
-    console.log(response);
+    const { data: response, loading: fetchLoading, error: fetchError, refetch } = useFetch<ApiResponse>("/perfumes");
+    const { data: brandsResponse } = useFetch<ApiResponse>("/brands");
     const { updateData, loading: updateLoading, error: updateError } = usePutFetch<Perfume>();
-    const [rows, setRows] = useState<Perfume[]>([]);
     const { deleteData, loading: deleteLoading, error: deleteError } = useDeleteFetch<Perfume>("/perfumes");
+    const { createData, loading: createLoading, error: createError } = usePostFetch<Perfume>("/perfumes");
+    const [rows, setRows] = useState<Perfume[]>([]);
+
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
         severity: 'success' as 'success' | 'error'
     });
+
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     useEffect(() => {
         if (response?.data) {
@@ -41,6 +56,30 @@ const Perfumes = () => {
         }
     }, [response]);
 
+    const handleCreatePerfume = async (data: PerfumeFormData) => {
+        const perfumeData = {
+            name: data.name,
+            brandId: parseInt(data.brandId as unknown as string),
+            description: data.description,
+            imageUrl: data.imageUrl || null
+        };
+        try {
+            await createData(perfumeData);
+            refetch();
+            setSnackbar({
+                open: true,
+                message: 'Perfume creado con éxito',
+                severity: 'success'
+            })
+        } catch (error) {
+            setSnackbar({
+                open: true,
+                message: 'Error al crear el perfume',
+                severity: 'error'
+            });
+            console.error('Error al crear el perfume:', error);
+        }
+    }
     const handleProcessRowUpdate = async (newRow: GridRowModel) => {
         try {
             const updatedBrand = await updateData(newRow.id, newRow);
@@ -54,6 +93,7 @@ const Perfumes = () => {
                 message: 'Marca actualizada con éxito',
                 severity: 'success'
             });
+            refetch();
 
             return updatedBrand;
         } catch (error) {
@@ -67,38 +107,44 @@ const Perfumes = () => {
     };
 
     const handleDelete = async (id: number) => {
+        if (deleteLoading) return;
         try {
-            if (deleteLoading) return;
-
-            const deleteBrand = await deleteData(id);
-            if (deleteBrand) {
-                setRows((prevRows) => prevRows.filter((row) => row.id !== id));
-                setSnackbar({
-                    open: true,
-                    message: 'Marca eliminada con éxito',
-                    severity: 'success'
-                });
-            }
-        } catch (error) {
+            await deleteData(id);
+            setRows((prevRows) => prevRows.filter((row) => row.id !== id));
             setSnackbar({
                 open: true,
-                message: 'Error al eliminar la marca',
+                message: 'Perfume eliminado con éxito',
+                severity: 'success'
+            });
+        } catch (error: unknown) {
+            console.log(error);
+            const errorMessage = (error as AxiosError).status== 400
+                ? 'No se puede eliminar el perfume porque tiene dependencias asociadas'
+                : 'Error al eliminar el perfume';
+                
+            setSnackbar({
+                open: true,
+                message: errorMessage,
                 severity: 'error'
             });
-            console.error('Error al eliminar la marca:', error);
+            console.error('Error al eliminar el perfume:', error);
         }
     };
 
+    useEffect(() => {
+        if (fetchError || updateError || deleteError || createError) {
+            setSnackbar({
+                open: true,
+                message: fetchError || updateError || deleteError || createError || 'Error en la operación',
+                severity: 'error'
+            });
+        }
+    }, [fetchError, updateError, deleteError, createError]);
 
-    if (fetchLoading || updateLoading) return (
+
+    if (fetchLoading || updateLoading || createLoading) return (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
             <CircularProgress />
-        </Box>
-    );
-    
-    if (fetchError || updateError || deleteError) return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <Typography variant="h6" color="error">Error: {fetchError || updateError || deleteError}</Typography>
         </Box>
     );
 
@@ -166,12 +212,46 @@ const Perfumes = () => {
                         )
                     }       
                 ]}
+                pageSize={10}
                 rows={rows}
                 processRowUpdate={handleProcessRowUpdate}
                 checkboxSelection
                 onRowSelectionChange={(newSelection: GridRowSelectionModel) => {
                     setSelectedRows(newSelection as number[]);
-                }}            />
+                }}           
+            />
+            <StandardForm
+                title="Crear Nuevo Perfume"
+                fields={[
+                    {
+                        name: 'name',
+                        label: 'Nombre del Perfume',
+                        required: true
+                    },
+                    {
+                        name: 'brandId',
+                        label: 'Marca',
+                        type: 'select',
+                        required: true,
+                        options: brandsResponse?.data?.map(brand => ({
+                            value: brand.id.toString(),
+                            label: brand.name
+                        })) || []
+                    },
+                    {
+                        name: 'description',
+                        label: 'Descripción',
+                        required: true
+                    },
+                    {
+                        name: 'imageUrl',
+                        label: 'URL de la Imagen',
+                        required: false
+                    }
+                ]}
+                onSubmit={(data: unknown) => handleCreatePerfume(data as PerfumeFormData)}
+                submitButtonText="Crear Perfume"
+            />
 
             <Snackbar 
                 open={snackbar.open}

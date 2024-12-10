@@ -22,13 +22,14 @@ interface UseFetchResponse<T> {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  setData: React.Dispatch<React.SetStateAction<T | null>>;
+  clearError: () => void;
 }
 
 interface FetchOptions {
   requiresAuth?: boolean;
   customHeaders?: Record<string, string>;
 }
-
 export const useFetch = <T>(
   endpoint: string,
   options: FetchOptions = { requiresAuth: true }
@@ -37,8 +38,8 @@ export const useFetch = <T>(
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [version, setVersion] = useState<number>(0);
 
-  // Memoizar las opciones para evitar recreaciones innecesarias
   const memoizedOptions = useMemo(
     () => ({
       requiresAuth: options.requiresAuth ?? true,
@@ -68,14 +69,27 @@ export const useFetch = <T>(
       } else {
         setError("Un error desconocido ha ocurrido");
       }
+      throw err;
     } finally {
       setLoading(false);
     }
   }, [endpoint, memoizedOptions, isAuthenticated]);
 
-  useEffect(() => {
-    fetchData();
+  const refetch = useCallback(async (): Promise<void> => {
+    setVersion((v) => v + 1);
+    await fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refetch: fetchData };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData, version]);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch,
+    setData,
+    clearError: () => setError(null),
+  };
 };
