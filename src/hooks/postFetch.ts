@@ -16,22 +16,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-interface PutFetchResponse<T> {
-  updateData: (id: number, data: Partial<T>) => Promise<T>;
+interface PostFetchResponse<T> {
+  createData: (data: Partial<T>) => Promise<T>;
   loading: boolean;
   error: string | null;
 }
 
-export const usePutFetch = <T>(): PutFetchResponse<T> => {
+export const usePostFetch = <T>(endpoint: string): PostFetchResponse<T> => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateData = async (id: number, data: Partial<T>): Promise<T> => {
+  const createData = async (data: Partial<T>): Promise<T> => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await api.put<T>(`/api/endpoint/${id}`, data);
+      const response = await api.post<T>(endpoint, data);
       return response?.data;
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
@@ -45,5 +45,5 @@ export const usePutFetch = <T>(): PutFetchResponse<T> => {
     }
   };
 
-  return { updateData, loading, error };
+  return { createData, loading, error };
 };

@@ -8,6 +8,14 @@ const api = axios.create({
   },
 });
 
+api.interceptors.request.use((config) => {
+  const storedToken = localStorage.getItem("secret");
+  if (storedToken && config.headers) {
+    config.headers.Authorization = `Bearer ${storedToken}`;
+  }
+  return config;
+});
+
 interface DeleteFetchResponse<T> {
   deleteData: (id: number) => Promise<T>;
   loading: boolean;

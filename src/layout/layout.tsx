@@ -17,10 +17,8 @@ import {
 } from '@mui/material';
 import {
   BrandingWatermark as BrandingWatermarkIcon,
-  Inventory as InventoryIcon,
   Menu as MenuIcon,
   ChevronRight as ChevronRightIcon,
-  Sell as SellIcon,
   ProductionQuantityLimits as ProductionQuantityLimitsIcon,
   Dashboard as DashboardIcon,
   Logout as LogoutIcon
@@ -32,8 +30,6 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Perfumes', icon: <ProductionQuantityLimitsIcon />, path: '/perfumes' },
   { text: 'Marcas', icon: <BrandingWatermarkIcon />, path: '/brands' },
-  { text: 'Inventario', icon: <InventoryIcon />, path: '/inventario' },
-  { text: 'Ventas', icon: <SellIcon />, path: '/ventas' },
 ];
 
 export interface NavDrawerLayoutProps { 
@@ -78,7 +74,7 @@ const NavDrawerLayout = ({ window }: NavDrawerLayoutProps) => {
       <List>
         <ListItem sx={{ justifyContent: 'flex-end'}}>
           <ListItemButton onClick={() => {
-            localStorage.removeItem('token');
+            localStorage.removeItem('secret');
             navigate('/login');
           }}>
             <ListItemIcon>
@@ -135,7 +131,7 @@ const NavDrawerLayout = ({ window }: NavDrawerLayoutProps) => {
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, // Better open performance on mobile
+            keepMounted: true,
           }}
           sx={{
             display: { xs: 'block', sm: 'none' },
