@@ -80,6 +80,7 @@ const Perfumes = () => {
             console.error('Error al crear el perfume:', error);
         }
     }
+    
     const handleProcessRowUpdate = async (newRow: GridRowModel) => {
         try {
             const updatedBrand = await updateData(newRow.id, newRow);
@@ -87,19 +88,19 @@ const Perfumes = () => {
             setRows((prevRows) => 
                 prevRows.map((row) => (row.id === updatedBrand.id ? updatedBrand : row))
             );
-
+    
             setSnackbar({
                 open: true,
-                message: 'Marca actualizada con éxito',
+                message: 'Perfume actualizado con éxito',
                 severity: 'success'
             });
             refetch();
-
+    
             return updatedBrand;
         } catch (error) {
             setSnackbar({
                 open: true,
-                message: 'Error al actualizar la marca',
+                message: 'Error al actualizar el perfume', 
                 severity: 'error'
             });
             throw error;
@@ -116,9 +117,9 @@ const Perfumes = () => {
                 message: 'Perfume eliminado con éxito',
                 severity: 'success'
             });
+            refetch(); 
         } catch (error: unknown) {
-            console.log(error);
-            const errorMessage = (error as AxiosError).status== 400
+            const errorMessage = (error as AxiosError).status === 400
                 ? 'No se puede eliminar el perfume porque tiene dependencias asociadas'
                 : 'Error al eliminar el perfume';
                 
